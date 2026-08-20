@@ -1,0 +1,44 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: connect-mysql
+    environment:
+      MYSQL_DATABASE: medconnect
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD" , "mysqladmin" ,"ping" ,"-h" , "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+        mysql:
+          condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    ports:
+      - "8080:8080"
+volumes:
+  mysql_data:
+
+
